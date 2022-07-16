@@ -3,7 +3,7 @@ import sys
 from typing import List
 
 from actions.download import download_dataset
-from actions.predict import predict
+from actions.test import test
 
 
 def parse_args():
@@ -18,9 +18,11 @@ def parse_args():
     )
     download.set_defaults(func=download_dataset)
 
-    train = subparsers.add_parser(name="train", help="train on dataset")
-    train.set_defaults(func=predict)
-    train.add_argument("-c", "--classifier", required=True, choices=["NaiveBayes", "LogisticRegression"])
+    test_subparser = subparsers.add_parser(name="test", help="test data transformers and classifiers on dataset")
+    test_subparser.set_defaults(func=test)
+    test_subparser.add_argument("-p", "--pre-processing", required=False)
+    test_subparser.add_argument("-f", "--data-format", required=True, choices=["tfidf"])
+    test_subparser.add_argument("-c", "--classifier", required=True, choices=["NaiveBayes", "LogisticRegression"])
 
     return parser
 
@@ -28,7 +30,8 @@ def parse_args():
 def main(args: List[str]):
     parser = parse_args()
     parsed_args = parser.parse_args()
-    if(not hasattr(parsed_args, "func")):
+
+    if (not hasattr(parsed_args, "func")):
         parser.print_usage()
         return
 

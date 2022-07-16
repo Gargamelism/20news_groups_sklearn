@@ -1,60 +1,36 @@
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
-from dataclasses import dataclass
-import typing
 
-
-@dataclass
-class ClassifierWrapper:
-    classifier: typing.Any
-    data_transformer: typing.Any
+from data_classes import ParsedArgs
+from helpers.functional import identity
 
 
 def get_classifier_func(classifier_name):
+    if not classifier_name:
+        return identity
+
     return {"NaiveBayes": naive_bayes_classifier,
             "LogisticRegression": logistic_regression_classifier
             }.get(classifier_name)
 
 
-def naive_bayes_classifier(pased_args, training_dataset, training_target) -> ClassifierWrapper:
-    count_vectorizer = CountVectorizer()
-    fit_transformed_data = count_vectorizer.fit_transform(training_dataset)
-
-    tfidf_transformer = TfidfTransformer()
-    tfidfed_fit_transformed_data = tfidf_transformer.fit_transform(fit_transformed_data)
-
-    data_transformer = lambda data: tfidf_transformer.transform(count_vectorizer.transform(data))
-
+def naive_bayes_classifier(pased_args: ParsedArgs, training_data, training_target):
     classifier = MultinomialNB()
-    classifier.fit(tfidfed_fit_transformed_data, training_target)
+    classifier.fit(training_data, training_target)
 
-    classifier_wrapper = ClassifierWrapper(classifier, data_transformer)
-    return classifier_wrapper
+    return classifier
 
 
-def logistic_regression_classifier(parsed_args, training_dataset, training_target) -> ClassifierWrapper:
-    count_vectorizer = CountVectorizer()
-    fit_transformed_data = count_vectorizer.fit_transform(training_dataset)
-
-    tfidf_transformer = TfidfTransformer()
-    tfidfed_fit_transformed_data = tfidf_transformer.fit_transform(fit_transformed_data)
-
-    data_transformer = lambda data: tfidf_transformer.transform(count_vectorizer.transform(data))
-
+def logistic_regression_classifier(parsed_args, training_data, training_target):
     classifier = LogisticRegression()
-    classifier.fit(tfidfed_fit_transformed_data, training_target)
+    classifier.fit(training_data, training_target)
 
-    classifier_wrapper = ClassifierWrapper(classifier, data_transformer)
-    return classifier_wrapper
+    return classifier
 
 
-def get_classifier(parsed_args) -> ClassifierWrapper:
-    dataset = fetch_20newsgroups()
+def get_trained_classifier(parsed_args: ParsedArgs, training_data, training_target):
+    classifier_func = get_classifier_func(parsed_args.classifier)
+    classifier = classifier_func(parsed_args, training_data, training_target)
 
-    classifier_wrapper = get_classifier_func(parsed_args.classifier)(
-        parsed_args, dataset.data, dataset.target
-    )
-
-    return classifier_wrapper
+    return classifier
