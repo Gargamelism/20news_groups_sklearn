@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_20newsgroups
 import re
+import nltk
 from nltk.stem import SnowballStemmer
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
@@ -38,8 +39,15 @@ class DataPreprocessing:
 
         # Split
         text = text.split()
+
+        # nltk stopwords needs to be downloaded first time it runs
+        for retry in range(2):
+            try:
+                stop = stopwords.words('english')
+            except:
+                nltk.download('stopwords')
+
         # Stopwords removal
-        stop = stopwords.words('english')
         text = [word for word in text if (word not in set(stop))]
         # Stem
         if stemming:

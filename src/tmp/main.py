@@ -3,7 +3,6 @@ from modeling import Modeling
 from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
-
     data = DataPreprocessing.get_data()
     data = data.sample(1000)
     data['clean_text'] = data['text'].apply(DataPreprocessing.clean)
@@ -16,5 +15,5 @@ if __name__ == "__main__":
     prob_baseline = dict(y_train.value_counts(normalize=True))
     results = Modeling.build_model(X_train, y_train)
     Modeling.evaluate(X_valid, y_valid, results, prob_baseline)
-    
+
     print('done')
