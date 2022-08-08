@@ -1,42 +1,31 @@
 import argparse
-import sys
-from typing import List
 
-from actions.download import download_dataset
-from actions.test import test
-
+from data_classes import ParsedArgs
+import data_handling.downloader as downloader
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="parser for exploration of scikit groups text"
     )
-    subparsers = parser.add_subparsers()
 
-    download = subparsers.add_parser(
-        name="download",
-        help="download the sklearn 20 newsgroups text dataset",
-    )
-    download.set_defaults(func=download_dataset)
+    parser.add_argument('-s', '--sample-size', type=int, default=0, help='Limit data size')
+    parser.add_argument('-d', '--show-target-distribution', type=bool, default=False, help='Show plot of target distribution')
+    parser.add_argument('-p', '--data-processors', default=[], choices=[])
+    parser.add_argument('-t', '--data-transformers', default=[], choices=[])
+    parser.add_argument('-c', '--classifiers', default=[], choices=[])
 
-    test_subparser = subparsers.add_parser(name="test", help="test data transformers and classifiers on dataset")
-    test_subparser.set_defaults(func=test)
-    test_subparser.add_argument("-p", "--pre-processing", required=False)
-    test_subparser.add_argument("-f", "--data-format", required=True, choices=["tfidf"])
-    test_subparser.add_argument("-c", "--classifier", required=True, choices=["NaiveBayes", "LogisticRegression"])
-
-    return parser
+    return parser.parse_args()
 
 
-def main(args: List[str]):
-    parser = parse_args()
-    parsed_args = parser.parse_args()
+def main():
+    parsed_args = parse_args()
+    parsed_args = ParsedArgs(**vars(parsed_args))
 
-    if (not hasattr(parsed_args, "func")):
-        parser.print_usage()
-        return
+    downloader.get_data(parsed_args.sample_size, parsed_args.show_target_distribution)
 
-    parsed_args.func(parsed_args)
+    print('Done!')
+
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

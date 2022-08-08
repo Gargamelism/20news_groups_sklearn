@@ -1,8 +1,11 @@
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
 class ParsedArgs:
-    pre_processing: str
-    data_format: str
-    classifier: str
+    show_target_distribution: bool
+    sample_size: int
+    data_processors: List[str]
+    data_transformers: List[str]
+    classifiers: List[str]
