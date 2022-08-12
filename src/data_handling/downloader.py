@@ -1,28 +1,17 @@
 from sklearn.datasets import fetch_20newsgroups
-import pandas
+import pandas as pd
 import matplotlib.pyplot as pyplot
 
-from enum import Enum
-from dataclasses import dataclass
-from typing import List
-
-
-class NewsGroupsDataEnum(Enum):
-    DATA = 'DATA'
-    TARGET = 'TARGET'
-
-
-@dataclass
-class NewsGroupsWrapper:
-    data: pandas.DataFrame
-    group_names: List[str]
+from src.data_handling.NewsGroupsWrapper import NewsGroupsWrapper
+from src.data_handling.NewsGroupsDataEnum import NewsGroupsDataEnum
 
 
 def get_data(sample_size: int, show_distribution: bool) -> NewsGroupsWrapper:
     news_groups_raw = fetch_20newsgroups(subset="all")
 
-    news_groups_data = pandas.DataFrame(
-        {NewsGroupsDataEnum.DATA: news_groups_raw.data, NewsGroupsDataEnum.TARGET: news_groups_raw.target})
+    news_groups_data = pd.DataFrame(
+        {NewsGroupsDataEnum.DATA: news_groups_raw.data,
+         NewsGroupsDataEnum.TARGET: news_groups_raw.target})
 
     if (sample_size > 0):
         news_groups_data = news_groups_data.sample(sample_size)

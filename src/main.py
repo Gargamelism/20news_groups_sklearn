@@ -1,6 +1,6 @@
 import argparse
 
-from data_classes import ParsedArgs
+from ParsedArgs import ParsedArgs
 import data_handling.downloader as downloader
 
 def parse_args():
@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('-s', '--sample-size', type=int, default=0, help='Limit data size')
     parser.add_argument('-d', '--show-target-distribution', type=bool, default=False, help='Show plot of target distribution')
     parser.add_argument('-p', '--data-processors', default=[], choices=[])
-    parser.add_argument('-t', '--data-transformers', default=[], choices=[])
+    parser.add_argument('-t', '--data-vectorizers', default=[], choices=[])
     parser.add_argument('-c', '--classifiers', default=[], choices=[])
 
     return parser.parse_args()
