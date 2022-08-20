@@ -1,6 +1,5 @@
-from enum import Enum
+from enum import IntEnum, auto
 
-
-class NewsGroupsDataEnum(Enum):
-    DATA = 'DATA'
-    TARGET = 'TARGET'
+class NewsGroupsDataEnum(IntEnum):
+    DATA = auto()
+    TARGET = auto()

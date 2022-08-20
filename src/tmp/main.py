@@ -2,7 +2,7 @@ from data_processing import DataPreprocessing
 from modeling import Modeling
 from sklearn.model_selection import train_test_split
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     data = DataPreprocessing.get_data()
     data = data.sample(1000)
     data['clean_text'] = data['text'].apply(DataPreprocessing.clean)

@@ -7,7 +7,7 @@ from src.data_handling.NewsGroupsDataEnum import NewsGroupsDataEnum
 
 
 def get_data(sample_size: int, show_distribution: bool) -> NewsGroupsWrapper:
-    news_groups_raw = fetch_20newsgroups(subset="all")
+    news_groups_raw = fetch_20newsgroups(subset='all')
 
     news_groups_data = pd.DataFrame(
         {NewsGroupsDataEnum.DATA: news_groups_raw.data,

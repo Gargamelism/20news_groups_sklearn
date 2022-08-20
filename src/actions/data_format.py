@@ -8,7 +8,7 @@ def get_formatter_func(formatter_name: str):
     if not formatter_name:
         return identity
 
-    return {"tfidf": tfidf_formatter}.get(formatter_name)
+    return {'tfidf': tfidf_formatter}.get(formatter_name)
 
 
 def tfidf_formatter(data):

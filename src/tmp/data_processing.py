@@ -16,7 +16,7 @@ class DataPreprocessing:
     def get_data(cls):
 
         # Read
-        data = fetch_20newsgroups(subset="all")
+        data = fetch_20newsgroups(subset='all')
         df = pd.DataFrame({'text': data.data, 'topic': data.target})
 
         # Distribution / balancy
@@ -51,7 +51,7 @@ class DataPreprocessing:
         text = [word for word in text if (word not in set(stop))]
         # Stem
         if stemming:
-            snowball = SnowballStemmer("english")
+            snowball = SnowballStemmer('english')
             text = [snowball.stem(word) for word in text]  # stemming
 
         # Return a list of words

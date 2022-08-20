@@ -9,8 +9,8 @@ def get_classifier_func(classifier_name):
     if not classifier_name:
         return identity
 
-    return {"NaiveBayes": naive_bayes_classifier,
-            "LogisticRegression": logistic_regression_classifier
+    return {'NaiveBayes': naive_bayes_classifier,
+            'LogisticRegression': logistic_regression_classifier
             }.get(classifier_name)
 
 

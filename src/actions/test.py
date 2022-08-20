@@ -15,7 +15,7 @@ def test(parsed_args: ParsedArgs):
 
     classifier = get_trained_classifier(parsed_args, data_formatter(preprocessed_data), dataset.target)
 
-    test_dataset = fetch_20newsgroups(subset="test")
+    test_dataset = fetch_20newsgroups(subset='test')
     preprocessed_test_data = preprocess_data(parsed_args, test_dataset.data)
     formatted_test_data = data_formatter(preprocessed_test_data)
     predicted = classifier.predict(formatted_test_data)
