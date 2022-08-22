@@ -2,8 +2,8 @@ from sklearn.datasets import fetch_20newsgroups
 import pandas as pd
 import matplotlib.pyplot as pyplot
 
-from src.data_handling.NewsGroupsWrapper import NewsGroupsWrapper
-from src.data_handling.NewsGroupsDataEnum import NewsGroupsDataEnum
+from src.data_handling.types.NewsGroupsWrapper import NewsGroupsWrapper
+from src.data_handling.types.NewsGroupsDataEnum import NewsGroupsDataEnum
 
 
 def get_data(sample_size: int, show_distribution: bool) -> NewsGroupsWrapper:

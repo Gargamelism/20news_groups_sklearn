@@ -4,7 +4,7 @@ from nltk.corpus import stopwords as nltk_stopwords
 from nltk.stem import SnowballStemmer
 from typing import Set
 
-from src.data_handling.DataCleaningEnum import DataCleaningEnum
+from src.data_handling.types.DataCleaningEnum import DataCleaningEnum
 
 
 def remove_stopwords(text: str) -> str:
