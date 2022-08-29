@@ -1,10 +1,14 @@
 import re
 import nltk
+import pandas as pd
 from nltk.corpus import stopwords as nltk_stopwords
 from nltk.stem import SnowballStemmer
-from typing import Set
+from sklearn.feature_extraction.text import TfidfVectorizer
+from typing import Set, Any
 
-from src.data_handling.types.DataCleaningEnum import DataCleaningEnum
+from src.data_handling.types.data_cleaning_enum import DataCleaningEnum
+from src.data_handling.types.vectorizer_conf import VectorizerConf
+from src.ml_modeling.types.model_data_wrapper import ModelDataWrapper, ModelSplitWrapper
 
 
 def remove_stopwords(text: str) -> str:
@@ -56,3 +60,20 @@ def clean(text: str, clean_methods: Set[DataCleaningEnum]) -> str:
         text = stem_text(text)
 
     return text
+
+
+def vectorizer_factory(data: ModelSplitWrapper, conf: VectorizerConf) -> Any:
+    tfidf_vectorizer = TfidfVectorizer(
+        ngram_range=(conf.ngram_range_start, conf.ngram_range_end), max_features=conf.max_features
+        )
+
+    tfidf_vectorizer.fit(data.data)
+
+    return tfidf_vectorizer
+
+def vectorize(data: ModelSplitWrapper, vectorizer: Any) -> ModelDataWrapper:
+    vectorized_data_arr = vectorizer.transform(data.data).toarray()
+
+    vectorized_data_df = pd.DataFrame(data=vectorized_data_arr, columns=vectorizer.get_feature_names_out())
+
+    return ModelDataWrapper(vectorized_data_df, data.target)
