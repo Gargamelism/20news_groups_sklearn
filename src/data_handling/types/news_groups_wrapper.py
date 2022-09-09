@@ -5,5 +5,6 @@ from typing import List
 
 @dataclass
 class NewsGroupsWrapper:
-    data: pd.DataFrame
+    orig_data: pd.DataFrame
     group_names: List[str]
+    data: pd.DataFrame

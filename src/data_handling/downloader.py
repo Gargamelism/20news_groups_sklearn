@@ -17,7 +17,7 @@ def get_data(sample_size: int, show_distribution: bool) -> NewsGroupsWrapper:
     if (sample_size > 0):
         news_groups_data = news_groups_data.sample(sample_size)
 
-    new_groups_wrapper = NewsGroupsWrapper(news_groups_data, news_groups_raw.target_names)
+    new_groups_wrapper = NewsGroupsWrapper(news_groups_data, news_groups_raw.target_names, news_groups_data.copy(deep=True))
 
     # verify if distribution requires special handling
     value_probabilities = new_groups_wrapper.data[NewsGroupsDataEnum.TARGET].value_counts(normalize=True)
