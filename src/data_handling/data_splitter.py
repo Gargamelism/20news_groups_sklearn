@@ -3,14 +3,45 @@ from sklearn.model_selection import train_test_split
 from typing import Tuple
 
 from src.ml_modeling.types.model_data_wrapper import ModelSplitWrapper
+from src.data_handling.types.split_conf import SplitConf
+from src.data_handling.types.split_by_enum import SplitByEnum
 
 
-def split_data(train_data: pd.Series, target: pd.Series) -> Tuple[
-    ModelSplitWrapper, ModelSplitWrapper, ModelSplitWrapper]:
-    X_train, X_test, y_train, y_test = train_test_split(train_data, target, test_size=0.3, random_state=42)
-    X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train, test_size=0.3, random_state=42)
+def split_data(train_data: pd.Series, target: pd.Series, conf: SplitConf = SplitConf()) -> Tuple[
+    ModelSplitWrapper, ModelSplitWrapper]:
+    new_data_splitter = DataSplitter(train_data, target)
 
-    return (
-        ModelSplitWrapper(X_train, y_train), ModelSplitWrapper(X_validate, y_validate),
-        ModelSplitWrapper(X_test, y_test)
-        )
+    return new_data_splitter.split_data(conf)
+
+
+class DataSplitter:
+    def __init__(self, train_data: pd.Series, target: pd.Series):
+        self.data = train_data
+        self.target = target
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, new_data: pd.Series):
+        self._data = new_data
+
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, new_target: pd.Series):
+        self._target = new_target
+
+    def split_data(self, conf: SplitConf = SplitConf()) -> Tuple[ModelSplitWrapper, ModelSplitWrapper]:
+        train_test_args = {
+            'test_size': conf.test_size
+            }
+        if (conf.split_by == SplitByEnum.SHUFFLE):
+            train_test_args['random_state'] = conf.random_state
+
+        X_train, X_test, y_train, y_test = train_test_split(self.data, self.target, **train_test_args)
+
+        return (ModelSplitWrapper(X_train, y_train), ModelSplitWrapper(X_test, y_test))

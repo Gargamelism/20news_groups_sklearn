@@ -37,9 +37,14 @@ def main():
         lambda text: processor.clean(text, {DataCleaningEnum.ALL})
         )
 
-    train_data_split_wrapper, validate_data_split_wrapper, test_data_split_wrapper = data_splitter.split_data(
+    train_data_split_wrapper, test_data_split_wrapper = data_splitter.split_data(
         news_groups_data.data[NewsGroupsDataEnum.DATA],
         news_groups_data.data[NewsGroupsDataEnum.TARGET]
+        )
+
+    train_data_split_wrapper, validate_data_split_wrapper = data_splitter.split_data(
+        train_data_split_wrapper.data,
+        train_data_split_wrapper.target
         )
 
     vectorizer = processor.vectorizer_factory(train_data_split_wrapper, VectorizerConf())
@@ -55,7 +60,15 @@ def main():
     for classifier_type in [ModelClassifierEnum.LogisticRegression, ModelClassifierEnum.GaussianNB,
                             ModelClassifierEnum.RandomForest, ModelClassifierEnum.XGBClassifier]:
         classifier = classifier_factory(classifier_type, train_data_wrapper, {})
-        evaluator.evaluate(classifier, test_data_wrapper, news_groups_data.group_names)
+        evaluation_result = evaluator.evaluate(classifier, test_data_wrapper, news_groups_data.group_names)
+
+        with open('evaluation.log', 'a') as evaluation_file:
+            evaluation_file.write(f'{str(classifier_type)} - without from, separated number \n')
+            evaluation_file.write(str(evaluation_result.get('accuracy')))
+            evaluation_file.write('\n')
+
+            if (classifier_type == ModelClassifierEnum.RandomForest):
+                evaluation_file.write(classifier.feature_importance.sort_values([2]).to_csv())
 
     print('Done!')
 
