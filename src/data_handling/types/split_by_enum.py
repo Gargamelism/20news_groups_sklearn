@@ -2,4 +2,5 @@ from enum import IntEnum, auto
 
 
 class SplitByEnum(IntEnum):
-    SHUFFLE = auto()
+    DEFAULT = auto()
+    EMAILS = auto()

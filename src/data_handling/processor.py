@@ -42,6 +42,9 @@ def stem_text(text: str) -> str:
 def clean(text: str, clean_methods: Set[DataCleaningEnum]) -> str:
     do_all = DataCleaningEnum.ALL in clean_methods
 
+    if (do_all or DataCleaningEnum.FROM_REMOVE in clean_methods):
+        _, _, text = text.partition('\n')
+
     if (do_all or DataCleaningEnum.SYMBOL_REMOVE in clean_methods):
         # Remove symbols (?!., etc.) - keep only words and numbers
         text = re.sub('[^a-zA-Z0-9]', ' ', text)
