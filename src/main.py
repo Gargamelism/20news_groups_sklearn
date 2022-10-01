@@ -1,10 +1,13 @@
 import argparse
+from datetime import datetime
 
 from parsed_args import ParsedArgs
 import data_handling.downloader as downloader
 import data_handling.processor as processor
 import data_handling.data_splitter as data_splitter
+import data_handling.helper as data_helper
 import ml_modeling.evaluator as evaluator
+from data_handling.types.split_conf import SplitConf, SplitByEnum
 from data_handling.types.news_groups_data_enum import NewsGroupsDataEnum
 from data_handling.types.data_cleaning_enum import DataCleaningEnum
 from data_handling.types.vectorizer_conf import VectorizerConf
@@ -14,16 +17,30 @@ from ml_modeling.classifier import classifier_factory
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='parser for exploration of scikit groups text'
+        description = 'parser for exploration of scikit groups text'
         )
 
-    parser.add_argument('-s', '--sample-size', type=int, default=0, help='Limit data size')
     parser.add_argument(
-        '-d', '--show-target-distribution', type=bool, default=False, help='Show plot of target distribution'
+        '-p', '--data-processors', default = [DataCleaningEnum.ALL.name], nargs = '*', choices = [cleaning.name.lower()
+                                                                                                  for
+                                                                                                  cleaning in
+                                                                                                  DataCleaningEnum]
         )
-    parser.add_argument('-p', '--data-processors', default=[], choices=[])
-    parser.add_argument('-t', '--data-vectorizers', default=[], choices=[])
-    parser.add_argument('-c', '--classifiers', default=[], choices=[])
+    parser.add_argument('-t', '--data-vectorizers', default = [], choices = [])
+    parser.add_argument('-c', '--classifiers', default = [], choices = [])
+
+    parser.add_argument('-s', '--sample-size', type = int, default = 0, help = 'Limit data size')
+
+    parser.add_argument(
+        '--show-target-distribution', type = bool, default = False, help = 'Show plot of target distribution'
+        )
+    parser.add_argument('--print-feature-importance', type = bool, default = False)
+    parser.add_argument(
+        '--separate-train-test', default = SplitByEnum.DEFAULT, choices = [split.name.lower()
+                                                                           for
+                                                                           split in
+                                                                           SplitByEnum]
+        )
 
     return parser.parse_args()
 
@@ -33,27 +50,41 @@ def main():
     parsed_args = ParsedArgs(**vars(parsed_args))
 
     news_groups_data = downloader.get_data(parsed_args.sample_size, parsed_args.show_target_distribution)
+
     news_groups_data.data[NewsGroupsDataEnum.DATA] = news_groups_data.data[NewsGroupsDataEnum.DATA].map(
-        lambda text: processor.clean(text, {DataCleaningEnum.ALL})
+        lambda text: processor.clean(text, parsed_args.data_processors)
         )
+
+    split_conf = SplitConf()
+    if parsed_args.separate_train_test == SplitByEnum.EMAILS:
+        emails = data_helper.get_emails(news_groups_data.orig_data[NewsGroupsDataEnum.DATA]).map(
+            lambda email: processor.clean(email, parsed_args.data_processors)
+            )
+        split_conf.split_by = SplitByEnum.EMAILS
+        split_conf.split_by_vals = emails
 
     train_data_split_wrapper, test_data_split_wrapper = data_splitter.split_data(
         news_groups_data.data[NewsGroupsDataEnum.DATA],
-        news_groups_data.data[NewsGroupsDataEnum.TARGET]
+        news_groups_data.data[NewsGroupsDataEnum.TARGET],
+        split_conf
         )
+    data_helper.print_distribution(train_data_split_wrapper.target, name = 'Train')
+
+    if parsed_args.separate_train_test == SplitByEnum.EMAILS:
+        split_conf.split_by_vals = train_data_split_wrapper.split_vars
 
     train_data_split_wrapper, validate_data_split_wrapper = data_splitter.split_data(
         train_data_split_wrapper.data,
-        train_data_split_wrapper.target
+        train_data_split_wrapper.target,
+        split_conf
         )
 
     vectorizer = processor.vectorizer_factory(train_data_split_wrapper, VectorizerConf())
 
     train_data_wrapper, validate_data_wrapper, test_data_wrapper = [
-        processor.vectorize(data_split_wrapper, vectorizer)
-        for data_split_wrapper in
-        [train_data_split_wrapper, validate_data_split_wrapper,
-         test_data_split_wrapper]]
+        processor.vectorize(data_split_wrapper, vectorizer) for data_split_wrapper in
+        [train_data_split_wrapper, validate_data_split_wrapper, test_data_split_wrapper]
+        ]
 
     print('baseline prediction - random choice')
     evaluator.evaluate_baseline(test_data_wrapper.target, news_groups_data.group_names)
@@ -62,12 +93,21 @@ def main():
         classifier = classifier_factory(classifier_type, train_data_wrapper, {})
         evaluation_result = evaluator.evaluate(classifier, test_data_wrapper, news_groups_data.group_names)
 
-        with open('evaluation.log', 'a') as evaluation_file:
-            evaluation_file.write(f'{str(classifier_type)} - without from, separated number \n')
-            evaluation_file.write(str(evaluation_result.get('accuracy')))
-            evaluation_file.write('\n')
+        filename = f'evaluation-{datetime.now().strftime("%Y-%m-%dT%H-%I")}.log'
+        with open(filename, 'a') as evaluation_file:
+            evaluation_file.write(f'{str(classifier_type)} \n')
 
-            if (classifier_type == ModelClassifierEnum.RandomForest):
+            accuracy = evaluation_result.get('accuracy')
+            weighted_avg = evaluation_result.get('weighted avg')
+            macro_avg = evaluation_result.get('macro avg')
+
+            evaluation_file.write(
+                f'accuracy: {str(accuracy)} \n'
+                f'weighted avg: {weighted_avg} \n'
+                f'macro avg: {macro_avg} \n\n'
+                )
+
+            if parsed_args.print_feature_importance and classifier_type == ModelClassifierEnum.RandomForest:
                 evaluation_file.write(classifier.feature_importance.sort_values([2]).to_csv())
 
     print('Done!')

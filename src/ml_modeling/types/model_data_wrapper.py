@@ -6,6 +6,7 @@ from dataclasses import dataclass
 class ModelSplitWrapper:
     data: pd.Series
     target: pd.Series
+    split_vars: pd.Series = None
 
 
 @dataclass
