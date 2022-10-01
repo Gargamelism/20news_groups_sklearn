@@ -1,5 +1,4 @@
 import argparse
-import pandas as pd
 from datetime import datetime
 
 from parsed_args import ParsedArgs
@@ -14,7 +13,6 @@ from data_handling.types.data_cleaning_enum import DataCleaningEnum
 from data_handling.types.vectorizer_conf import VectorizerConf
 from ml_modeling.types.model_classifier_enum import ModelClassifierEnum
 from ml_modeling.classifier import classifier_factory
-from src.ml_modeling.types.model_data_wrapper import ModelSplitWrapper
 
 
 def parse_args():
@@ -33,7 +31,6 @@ def parse_args():
 
     parser.add_argument('-s', '--sample-size', type = int, default = 0, help = 'Limit data size')
 
-    parser.add_argument('--split-validation', type = bool, default = False)
     parser.add_argument(
         '--show-target-distribution', type = bool, default = False, help = 'Show plot of target distribution'
         )
@@ -74,28 +71,19 @@ def main():
     data_helper.print_distribution(train_data_split_wrapper.target, name = 'Train')
 
     if parsed_args.separate_train_test == SplitByEnum.EMAILS:
-        train_list = train_data_split_wrapper.data.to_list()
-        emails = filter(
-            lambda email: next(
-                (text for text in train_list if email in text), False
-                ), split_conf.split_by_vals
-            )
-        emails = pd.Series(emails)
-        split_conf.split_by_vals = emails
+        split_conf.split_by_vals = train_data_split_wrapper.split_vars
 
-    validate_data_split_wrapper = ModelSplitWrapper(pd.Series([]), pd.Series([]))
-    if (parsed_args.split_validation):
-        train_data_split_wrapper, validate_data_split_wrapper = data_splitter.split_data(
-            train_data_split_wrapper.data,
-            train_data_split_wrapper.target,
-            split_conf
-            )
+    train_data_split_wrapper, validate_data_split_wrapper = data_splitter.split_data(
+        train_data_split_wrapper.data,
+        train_data_split_wrapper.target,
+        split_conf
+        )
 
     vectorizer = processor.vectorizer_factory(train_data_split_wrapper, VectorizerConf())
 
-    train_data_wrapper, test_data_wrapper = [
+    train_data_wrapper, validate_data_wrapper, test_data_wrapper = [
         processor.vectorize(data_split_wrapper, vectorizer) for data_split_wrapper in
-        [train_data_split_wrapper, test_data_split_wrapper]
+        [train_data_split_wrapper, validate_data_split_wrapper, test_data_split_wrapper]
         ]
 
     print('baseline prediction - random choice')

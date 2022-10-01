@@ -12,14 +12,15 @@ class ParsedArgs:
     data_vectorizers: List[str]
     classifiers: List[str]
     print_feature_importance: bool
-    split_validation: bool
 
     # special parsings
-    data_processors: Set[DataCleaningEnum]
-    _data_processors: Set[DataCleaningEnum] = field(init = False)
-
+    # separate_train_test MUST be declared BEFORE data_processors
     separate_train_test: SplitByEnum
     _separate_train_test: SplitByEnum = field(init = False)
+
+    data_processors: Set[DataCleaningEnum]
+    _data_processors: Set[DataCleaningEnum] = field(init = False)
+    # end of special parsing
 
     @property
     def data_processors(self) -> Set[DataCleaningEnum]:
@@ -28,6 +29,8 @@ class ParsedArgs:
     @data_processors.setter
     def data_processors(self, data_processors: List[str]):
         self._data_processors = {DataCleaningEnum[data_processor.upper()] for data_processor in data_processors}
+        if self.separate_train_test == SplitByEnum.EMAILS:
+            self.data_processors.discard(DataCleaningEnum.FROM_REMOVE)
 
     @property
     def separate_train_test(self) -> SplitByEnum:

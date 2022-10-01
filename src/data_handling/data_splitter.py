@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from enum import IntEnum, auto
 
 from src.ml_modeling.types.model_data_wrapper import ModelSplitWrapper
@@ -48,25 +48,28 @@ class DataSplitter:
             'random_state': conf.random_state
             }
 
-        X_train, X_test, y_train, y_test = pd.Series([]), pd.Series([]), pd.Series([]), pd.Series([])
-        if (conf.split_by == SplitByEnum.DEFAULT):
-            X_train, X_test, y_train, y_test = train_test_split(self.data, self.target, **train_test_split_args)
-        if (conf.split_by == SplitByEnum.EMAILS):
-            X_train, X_test, y_train, y_test = self.__train_test_split_by_vals(
+        if conf.split_by == SplitByEnum.EMAILS:
+            X_train, X_test, y_train, y_test, train_split_vals, test_split_vals = self.__train_test_split_by_vals(
                 conf.split_by_vals, train_test_split_args
                 )
+            train_split_wrapper = ModelSplitWrapper(X_train, y_train, pd.Series(train_split_vals))
+            test_split_wrapper = ModelSplitWrapper(X_test, y_test, pd.Series(test_split_vals))
+        else:
+            X_train, X_test, y_train, y_test = train_test_split(self.data, self.target, **train_test_split_args)
+            train_split_wrapper = ModelSplitWrapper(X_train, y_train)
+            test_split_wrapper = ModelSplitWrapper(X_test, y_test)
 
-        return (ModelSplitWrapper(X_train, y_train), ModelSplitWrapper(X_test, y_test))
+        return train_split_wrapper, test_split_wrapper
 
     def __train_test_split_by_vals(self, vals: pd.Series, train_test_split_args: Dict) -> Tuple[
-        pd.Series, pd.Series, pd.Series, pd.Series]:
+        pd.Series, pd.Series, pd.Series, pd.Series, List[str], List[str]]:
         SPLIT_COL_KEY = 'SPLIT_COL_KEY'
 
-        train_vals, test_vals = train_test_split(vals, **train_test_split_args)
+        train_split_vals, test_split_vals = train_test_split(vals, **train_test_split_args)
 
         split_on_vals = self.data.map(
             lambda text: SplitClassesEnum.TEST if any(
-                test_val for test_val in test_vals if test_val in text
+                test_val for test_val in test_split_vals if test_val in text
                 ) else SplitClassesEnum.TRAIN
             )
 
@@ -79,5 +82,6 @@ class DataSplitter:
 
         return (
             train_df[NewsGroupsDataEnum.DATA], test_df[NewsGroupsDataEnum.DATA],
-            train_df[NewsGroupsDataEnum.TARGET], test_df[NewsGroupsDataEnum.TARGET]
+            train_df[NewsGroupsDataEnum.TARGET], test_df[NewsGroupsDataEnum.TARGET],
+            train_split_vals, test_split_vals
             )
